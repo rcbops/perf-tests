@@ -35,7 +35,7 @@ clean:
 	cd nptest; make clean
 
 vendor: ./vendor/
-	cp ../../vendor ./
+	cp -R ../../vendor ./
 
 launch: launch.go vendor
 	docker build -f launch.dockerfile -t launch:latest ./
@@ -43,7 +43,7 @@ launch: launch.go vendor
 # 'runtests' is the test runner target
 runtests: launch
 	@echo Creating netperf Namespace and default CRB
-	kubectl create ns netperf
+	-kubectl create ns netperf
 	kubectl apply -f netperf-default-crb.yml
 	@echo Launching network performance tests
 	docker run --rm -it \
