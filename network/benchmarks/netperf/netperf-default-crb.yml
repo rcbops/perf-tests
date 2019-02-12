@@ -1,0 +1,14 @@
+# This role binding allows "jane" to read pods in the "default" namespace.
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: run-netperf
+  namespace: netperf
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: netperf
+roleRef:
+  kind: ClusterRole #this must be Role or ClusterRole
+  name: psp:privileged # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io

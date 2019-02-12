@@ -216,6 +216,7 @@ func createRCs(c *kubernetes.Clientset) bool {
 	name := "netperf-orch"
 	fmt.Println("Creating replication controller", name)
 	replicas := int32(1)
+	runAsNonRoot := false
 
 	_, err := c.Core().ReplicationControllers(testNamespace).Create(&api.ReplicationController{
 		ObjectMeta: metav1.ObjectMeta{Name: name},
@@ -227,6 +228,9 @@ func createRCs(c *kubernetes.Clientset) bool {
 					Labels: map[string]string{"app": name},
 				},
 				Spec: api.PodSpec{
+					SecurityContext: &api.PodSecurityContext{
+						RunAsNonRoot: &runAsNonRoot,
+					},
 					Containers: []api.Container{
 						{
 							Name:            name,
@@ -279,6 +283,9 @@ func createRCs(c *kubernetes.Clientset) bool {
 						Labels: map[string]string{"app": name},
 					},
 					Spec: api.PodSpec{
+						SecurityContext: &api.PodSecurityContext{
+							RunAsNonRoot: &runAsNonRoot,
+						},
 						NodeName: kubeNode,
 						Containers: []api.Container{
 							{

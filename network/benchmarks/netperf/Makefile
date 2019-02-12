@@ -20,7 +20,7 @@ docker: nptests launch
 	mkdir -p Dockerbuild && \
 	cp -f Dockerfile Dockerbuild/ && \
 	cp -f nptest/nptests Dockerbuild/ &&\
-	docker build -t $(DOCKERREPO) Dockerbuild/ 
+	docker build -t $(DOCKERREPO) Dockerbuild/
 
 push: docker
 	gcloud docker push $(DOCKERREPO)
@@ -34,15 +34,29 @@ clean:
 	@go clean
 	cd nptest; make clean
 
-launch: launch.go
-	go build -o launch launch.go
+vendor: ./vendor/
+	cp ../../vendor ./
+
+launch: launch.go vendor
+	docker build -f launch.dockerfile -t launch:latest ./
 
 # 'runtests' is the test runner target
 runtests: launch
+	@echo Creating netperf Namespace and default CRB
+	kubectl create ns netperf
+	kubectl apply -f netperf-default-crb.yml
 	@echo Launching network performance tests
-	./launch
-	@echo Network performance tests complete - running matplotlib to generate graphs and copy them back
-	cp netperf-latest.csv plotperf && cd plotperf; make plot && mv *png .. && mv *svg ..
+	docker run --rm -it \
+		-v $(KUBECONFIG):/kubeconfig \
+		-v $(PWD):/app \
+		launch:latest \
+		/usr/local/bin/launch --kubeConfig /kubeconfig
+	@echo Network performance tests complete
+	@echo Running matplotlib to generate graphs and copy them back
+	cp netperf-latest.csv plotperf
+	$(MAKE) -c plotperf plot
+	mv plotperf/*png ./
+	mv plotperf/*svg ./
 	@echo Results file netperf-latest.csv and SVG/PNG graphs generated successfully
 
 
